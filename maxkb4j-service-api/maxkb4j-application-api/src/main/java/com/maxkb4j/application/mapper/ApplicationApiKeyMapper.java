@@ -4,8 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.maxkb4j.application.entity.ApplicationApiKeyEntity;
 
 /**
- * @author tarzan
- * @date 2025-01-02 09:01:12
+ * 应用API密钥 Mapper 接口，对应实体：ApplicationApiKeyEntity
  */
 public interface ApplicationApiKeyMapper extends BaseMapper<ApplicationApiKeyEntity>{
  

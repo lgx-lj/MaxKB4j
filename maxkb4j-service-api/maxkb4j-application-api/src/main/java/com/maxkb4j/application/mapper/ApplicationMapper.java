@@ -5,8 +5,7 @@ import com.maxkb4j.application.entity.ApplicationEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
- * @author tarzan
- * @date 2024-12-25 13:09:54
+ * 应用主表 Mapper 接口，对应实体：ApplicationEntity
  */
 @Mapper
 public interface ApplicationMapper extends BaseMapper<ApplicationEntity>{

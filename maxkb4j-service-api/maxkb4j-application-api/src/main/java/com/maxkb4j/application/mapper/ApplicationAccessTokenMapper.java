@@ -6,8 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 
 
 /**
- * @author tarzan
- * @date 2024-12-25 18:05:58
+ * 应用访问令牌 Mapper 接口，对应实体：ApplicationAccessTokenEntity
  */
 @Mapper
 public interface ApplicationAccessTokenMapper extends BaseMapper<ApplicationAccessTokenEntity>{

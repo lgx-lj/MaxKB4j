@@ -9,13 +9,11 @@ import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
-/**
- * @author tarzan
- * @date 2024-12-29 10:34:03
- */
+/** 应用对话用户统计 Mapper 接口，对应实体：ApplicationChatUserStatsEntity */
 @Mapper
 public interface ApplicationChatUserStatsMapper extends BaseMapper<ApplicationChatUserStatsEntity>{
 
+    /** 查询客户数量变化趋势 */
     List<ApplicationStatisticsVO> getCustomerCountTrend(String appId, @Param("query") ChatQueryDTO query);
 
 }

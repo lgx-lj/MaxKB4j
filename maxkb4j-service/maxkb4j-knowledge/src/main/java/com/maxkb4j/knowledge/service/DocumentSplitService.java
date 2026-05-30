@@ -14,6 +14,26 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * 文档切片服务 —— 将解析后的文本按策略拆分为段落（切片）
+ * <p>
+ * 这是知识库入库链路中"切片"环节的核心实现。负责将 {@link DocumentParser} 解析出的
+ * 长文本按 Markdown 标题层级、句子边界等规则拆分为多个 ParagraphSimple，每个切片
+ * 最终对应 paragraph 表中的一条记录，是 RAG 检索的最小数据单元。
+ * </p>
+ *
+ * <h3>两种切片策略</h3>
+ * <ul>
+ *   <li><b>智能模式（smartSplit）</b>：默认策略，自动检测 Markdown 标题层级切分，
+ *       超长段落（>512字符）按句子切分，保留表格完整性</li>
+ *   <li><b>自定义模式（recursive）</b>：用户指定分隔符列表（如 #, ##, ### 等），
+ *       按指定模式递归切分</li>
+ * </ul>
+ *
+ * <h3>表格保护</h3>
+ * 超长段落切分时，通过 {@link #splitContentPreserveTable} 方法识别表格行
+ * （以 | 开头的行），保证表格内容不会被从中间拆开。
+ */
 @Component
 public class DocumentSplitService implements IDocumentSplitService {
 
@@ -46,6 +66,22 @@ public class DocumentSplitService implements IDocumentSplitService {
 
     private static final int DEFAULT_LIMIT = 512;
 
+    /**
+     * 切片主入口
+     * <p>
+     * 根据是否指定自定义分割模式，分派到不同的处理策略：
+     * </p>
+     * <ul>
+     *   <li>指定了 patterns → 走 {@link #recursive(String, String[], int, Boolean)} 自定义递归分割</li>
+     *   <li>未指定 patterns → 走 {@link #smartSplit(String)} 智能分割</li>
+     * </ul>
+     *
+     * @param docText    待切分的原始文本（已由解析器从文件中提取）
+     * @param patterns   自定义分隔模式数组，为 null 或空时走智能模式
+     * @param limit      段落最大长度限制（字符数），超长段落会被进一步切分
+     * @param withFilter 是否对结果进行清洗（去除多余空格、空行、Markdown 标题符号）
+     * @return 切片后的段落列表，每个段落包含 title（继承的标题）和 content（文本片段）
+     */
     public List<ParagraphSimple> split(String docText, String[] patterns, Integer limit, Boolean withFilter) {
         if (patterns != null && patterns.length > 0) {
             return recursive(docText, patterns, limit, withFilter);
@@ -54,6 +90,20 @@ public class DocumentSplitService implements IDocumentSplitService {
         }
     }
 
+    /**
+     * 智能切片（默认策略）
+     * <p>
+     * 分三个阶段处理：
+     * </p>
+     * <ol>
+     *   <li><b>标题切分</b>：检测 Markdown 标题（# ~ ######），按标题层级拆分</li>
+     *   <li><b>超长切分</b>：超过 512 字符的段落用 splitContentPreserveTable 切分（保护表格）</li>
+     *   <li><b>清洗过滤</b>：去除多余空格/空行/Markdown 标题符号后输出</li>
+     * </ol>
+     *
+     * @param text 待切分文本
+     * @return 切片后的段落列表
+     */
     public List<ParagraphSimple> smartSplit(String text) {
         List<ParagraphSimple> result = new ArrayList<>();
 
@@ -171,6 +221,20 @@ public class DocumentSplitService implements IDocumentSplitService {
         return result.trim();
     }
 
+    /**
+     * 自定义递归切片
+     * <p>
+     * 按用户指定的分隔模式列表，从粗到细逐层切分。例如传入 ["#", "##", "###"] 时，
+     * 先用 # 切分，再用 ## 对每个切片继续切分，最后用 ### 切分。
+     * 所有 pattern 遍历完成后，对超长段落（>limit）按句子 Split 进一步切分。
+     * </p>
+     *
+     * @param docText    原始文本
+     * @param patterns   用户指定的分隔正则模式数组
+     * @param limit      段落最大长度
+     * @param withFilter 是否清洗结果
+     * @return 切片后的段落列表
+     */
     public List<ParagraphSimple> recursive(String docText, String[] patterns, int limit, Boolean withFilter) {
         if (docText == null || docText.isEmpty()) {
             return Collections.emptyList();
@@ -236,6 +300,18 @@ public class DocumentSplitService implements IDocumentSplitService {
                 .toList();
     }
 
+    /**
+     * 超长段落切分（保护表格完整性）
+     * <p>
+     * 对于超过 limit 的段落，先将文本中的表格行（以 | 开头的行）识别出来用
+     * {{TABLE}}...{{/TABLE}} 标记包裹，非表格部分用 SentenceSplitter 按句子切分。
+     * 这样可以保证表格内容不会被从中间拆开。
+     * </p>
+     *
+     * @param part  待切分的段落
+     * @param limit 段落最大长度限制
+     * @return 切分后的段落列表
+     */
     public static List<ParagraphSimple> splitContentPreserveTable(ParagraphSimple part, int limit) {
         String content = part.getContent();
 

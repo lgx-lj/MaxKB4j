@@ -53,6 +53,20 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 /**
+ * 文档服务 —— 知识库文档的完整管理
+ * <p>
+ * 提供文档的导入、查询、导出、迁移、删除等操作。是 DocumentController 的后端服务层。
+ * </p>
+ *
+ * <h3>核心入库方法</h3>
+ * <ul>
+ *   <li>{@link #importQa(String, MultipartFile[])} —— 导入 QA 问答对（Excel/CSV）</li>
+ *   <li>{@link #importTable(String, MultipartFile[])} —— 导入表格文档</li>
+ *   <li>{@link #split(String, MultipartFile[], String[], Integer, Boolean)} —— 预切片（预览用）</li>
+ *   <li>{@link #createWebDoc(String, List, String)} —— 从 URL 创建 WEB 文档</li>
+ *   <li>{@link #batchCreateDocs(String, int, List)} —— 委托给 DocumentWriteService 批量写入</li>
+ * </ul>
+ *
  * @author tarzan
  * @date 2024-12-25 17:00:26
  */
@@ -121,6 +135,25 @@ public class DocumentService extends ServiceImpl<DocumentMapper, DocumentEntity>
         return this.updateBatchById(documentEntities);
     }
 
+    /**
+     * 导入 QA 问答对文档
+     * <p>
+     * 对应 API：POST /admin/workspace/api/knowledge/{id}/document/qa
+     * 支持上传 Excel(.xlsx/.xls) 或 CSV 文件，每行包含"问题"和"答案"两列。
+     * 也支持 ZIP 压缩包（内部处理解压）。
+     * </p>
+     *
+     * <h3>处理流程</h3>
+     * <ol>
+     *   <li>校验文件数量和大小限制</li>
+     *   <li>DocumentHandler.processQaFile() 解析 Excel/CSV，生成 DocumentSimple 列表</li>
+     *   <li>调用 batchCreateDocs() → DocumentWriteService.batchCreateDocs() 写入数据库</li>
+     *   <li>写入完成后发布 DocumentIndexEvent，异步向量化</li>
+     * </ol>
+     *
+     * @param knowledgeId 知识库ID
+     * @param files       上传的 Excel/CSV/ZIP 文件数组
+     */
     @Transactional
     public void importQa(String knowledgeId, MultipartFile[] files) throws IOException {
         if (checkFileLimit(knowledgeId,files)){
@@ -148,6 +181,16 @@ public class DocumentService extends ServiceImpl<DocumentMapper, DocumentEntity>
         }
     }
 
+    /**
+     * 导入表格文档
+     * <p>
+     * 对应 API：POST /admin/workspace/api/knowledge/{id}/document/table
+     * 将表格的每一行转为 "key: value" 格式的文本段落。
+     * </p>
+     *
+     * @param knowledgeId 知识库ID
+     * @param files       上传的表格文件
+     */
     @Transactional
     public void importTable(String knowledgeId, MultipartFile[] files) throws IOException {
         if (checkFileLimit(knowledgeId,files)){
@@ -173,7 +216,19 @@ public class DocumentService extends ServiceImpl<DocumentMapper, DocumentEntity>
         }
     }
 
-    public boolean batchCreateDocs(String knowledgeId,int knowledgeType, List<DocumentSimple> docs) {
+    /**
+     * 委托给 DocumentWriteService 批量写入文档到数据库
+     * <p>
+     * 这是一个薄代理方法，实际逻辑在 DocumentWriteService.batchCreateDocs() 中。
+     * 写入数据库后自动发布 DocumentIndexEvent 触发异步向量化。
+     * </p>
+     *
+     * @param knowledgeId   知识库ID
+     * @param knowledgeType 知识库类型
+     * @param docs          已切分好段落的文档列表
+     * @return true=写入成功
+     */
+    public boolean batchCreateDocs(String knowledgeId, int knowledgeType, List<DocumentSimple> docs) {
        return documentWriteService.batchCreateDocs(knowledgeId,knowledgeType, docs);
     }
 
@@ -308,6 +363,30 @@ public class DocumentService extends ServiceImpl<DocumentMapper, DocumentEntity>
         );
     }
 
+    /**
+     * 文档预切片（仅预览，不保存到数据库）
+     * <p>
+     * 对应 API：POST /admin/workspace/api/knowledge/{id}/document/split
+     * 用于用户上传前预览切片效果，不会真正写入数据库。
+     * </p>
+     *
+     * <h3>处理步骤</h3>
+     * <ol>
+     *   <li>校验文件数量和大小限制</li>
+     *   <li>处理 ZIP 文件（解压提取内部文件）</li>
+     *   <li>文件存储到 MongoDB（OSS）获取 fileId</li>
+     *   <li>DocumentParseService.extractText() 解析文件提取文本</li>
+     *   <li>DocumentSplitService.split() 按策略切片</li>
+     *   <li>返回切片预览结果（不写入 paragraph 表）</li>
+     * </ol>
+     *
+     * @param knowledgeId 知识库ID
+     * @param files       上传的文件
+     * @param patterns    切片模式（null 时走智能模式）
+     * @param limit       段落最大长度限制
+     * @param withFilter  是否清洗结果
+     * @return 切片预览列表，每个元素包含文件名、切片段落、存储的 fileId
+     */
     public List<TextSegmentVO> split(String knowledgeId, MultipartFile[] files, String[] patterns, Integer limit, Boolean withFilter) throws IOException {
         if (checkFileLimit(knowledgeId,files)){
             throw new FileLimitExceededException("文件数量超出限制");
@@ -353,9 +432,16 @@ public class DocumentService extends ServiceImpl<DocumentMapper, DocumentEntity>
         for (DocFileVO fs : fileStreams) {
             TextSegmentVO vo = new TextSegmentVO();
             vo.setName(fs.getName());
+            log.info("开始处理文件: {}, 大小: {} bytes", fs.getName(), fs.getBytes().length);
+            long t1 = System.currentTimeMillis();
             String fileId = mongoFileService.storeFile(fs.getBytes(), fs.getName(), fs.getContentType());
+            log.info("文件存储完成: {} -> {}, 耗时: {}ms", fs.getName(), fileId, System.currentTimeMillis() - t1);
+            long t2 = System.currentTimeMillis();
             String text = documentParseService.extractText(fs.getName(), new ByteArrayInputStream(fs.getBytes()));
+            log.info("文本提取完成: {}, 文本长度: {} 字符, 耗时: {}ms", fs.getName(), text.length(), System.currentTimeMillis() - t2);
+            long t3 = System.currentTimeMillis();
             vo.setContent(documentSpiltService.split(text, patterns, limit, withFilter));
+            log.info("切片完成: {}, 段落数: {}, 耗时: {}ms", fs.getName(), vo.getContent().size(), System.currentTimeMillis() - t3);
             vo.setSourceFileId(fileId);
             result.add(vo);
         }
@@ -363,6 +449,17 @@ public class DocumentService extends ServiceImpl<DocumentMapper, DocumentEntity>
     }
 
 
+    /**
+     * 从 URL 创建 WEB 知识库文档
+     * <p>
+     * 对应 API：POST /admin/workspace/api/knowledge/{id}/document/web
+     * 通过 Jsoup 抓取网页内容 → HTML 转 Markdown → 切片 → 写入数据库。
+     * </p>
+     *
+     * @param knowledgeId    知识库ID
+     * @param sourceUrlList  要抓取的网页 URL 列表
+     * @param selector       CSS 选择器，用于提取页面指定区域（默认 body）
+     */
     @Transactional
     public void createWebDoc(String knowledgeId, List<String> sourceUrlList, String selector) {
         for (String sourceUrl : sourceUrlList) {

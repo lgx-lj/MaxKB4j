@@ -21,6 +21,33 @@ import java.io.IOException;
 import java.util.List;
 
 /**
+ * 知识库文档管理控制器
+ * <p>
+ * 提供知识库中文档的全生命周期管理 API，包括文档导入、切片预览、
+ * 批量创建、迁移、导出、刷新向量等操作。
+ * </p>
+ *
+ * <h3>核心接口一览</h3>
+ * <ul>
+ *   <li><b>切片预览</b>：POST /knowledge/{id}/document/split —— 上传文件预览切片效果（不写入数据库）</li>
+ *   <li><b>批量创建</b>：PUT /knowledge/{id}/document/batch_create —— 确认切片结果后正式入库</li>
+ *   <li><b>WEB 文档</b>：POST /knowledge/{id}/document/web —— 通过 URL 抓取网页内容入库</li>
+ *   <li><b>问答导入</b>：POST /knowledge/{id}/document/qa —— 批量导入 Excel/CSV 问答对</li>
+ *   <li><b>表格导入</b>：POST /knowledge/{id}/document/table —— 批量导入 Excel/CSV 表格数据</li>
+ *   <li><b>文档迁移</b>：PUT /knowledge/{id}/document/migrate/{targetKnowledgeId} —— 跨知识库迁移文档</li>
+ *   <li><b>刷新向量</b>：PUT /knowledge/{id}/document/{docId}/refresh —— 重新生成文档向量</li>
+ *   <li><b>导出</b>：GET /knowledge/{id}/document/{docId}/export —— 导出文档为 Excel</li>
+ * </ul>
+ *
+ * <h3>文档入库完整链路</h3>
+ * <pre>
+ *   前端上传文件 → split（切片预览）→ 用户确认切片效果
+ *     → batch_create（批量入库）
+ *       → DocumentWriteService.batchCreateDocs() 写入 PostgreSQL
+ *       → 发布 DocumentIndexEvent → DataIndexListener 异步向量化
+ *         → CompositeStoreImpl 双写（PG向量 + MongoDB全文）
+ * </pre>
+ *
  * @author tarzan
  * @date 2024-12-25 16:00:15
  */
@@ -56,6 +83,45 @@ public class DocumentController {
         documentService.importTable(id, file);
     }
 
+    /**
+     * 【文档切片预览】上传文件并预览切片效果，不写入数据库
+     * <p>
+     * 这是知识库入库链路的前置预览步骤。用户上传文档后，系统解析文件提取文本，
+     * 按指定的切片策略拆分段落，返回预览结果供用户确认。确认后前端会调用
+     * {@code PUT /knowledge/{id}/document/batch_create} 接口正式入库。
+     * </p>
+     *
+     * <h3>完整处理流程</h3>
+     * <ol>
+     *   <li><b>校验</b>：检查文件数量和大小是否超出知识库限制</li>
+     *   <li><b>解压</b>：如果是 ZIP 文件，递归提取内部所有文件</li>
+     *   <li><b>存储</b>：原始文件存入 MongoDB OSS，返回 fileId</li>
+     *   <li><b>解析</b>：通过 {@link DocumentParseService#extractText} 根据扩展名匹配解析器提取文本</li>
+     *   <li><b>切片</b>：通过 {@link DocumentSplitService#split} 按指定策略（智能/自定义正则）拆分段落</li>
+     *   <li><b>返回</b>：包装为 {@link TextSegmentVO} 列表，包含文件名、切片段落、fileId</li>
+     * </ol>
+     *
+     * <h3>入参说明</h3>
+     * <ul>
+     *   <li><b>patterns</b>：切片分隔符正则数组，为 null 时使用智能切片模式（按 Markdown 标题层级切分）</li>
+     *   <li><b>limit</b>：单个段落的最大字符数限制，超出部分会递归再切</li>
+     *   <li><b>withFilter</b>：是否对切片结果进行清洗（去除空行、特殊字符等）</li>
+     * </ul>
+     *
+     * <h3>典型调用场景</h3>
+     * <ol>
+     *   <li>用户选择文件上传 → 调用此接口预览切片 → 用户调整切片参数 → 再次预览</li>
+     *   <li>用户确认切片效果满意 → 调用 batch_create 正式入库 → 异步向量化</li>
+     * </ol>
+     *
+     * @param id         知识库ID（路径参数）
+     * @param file       上传的文件数组，支持 PDF/Word/Excel/Markdown/TXT/CSV/PPT/HTML/ZIP
+     * @param patterns   自定义切片分隔符正则表达式数组（可选，null 则走智能切片）
+     * @param limit      单个段落最大长度限制（可选）
+     * @param withFilter 是否清洗切片结果（可选，默认 true）
+     * @return 切片预览结果列表，每个元素包含文件名、切片段落文本、存储的 fileId
+     * @throws IOException 文件读写异常
+     */
     @SaCheckPerm(PermissionEnum.KNOWLEDGE_DOCUMENT_CREATE)
     @PostMapping("/knowledge/{id}/document/split")
     public R<List<TextSegmentVO>> split(@PathVariable String id, MultipartFile[] file, String[] patterns, Integer limit, Boolean withFilter) throws IOException {

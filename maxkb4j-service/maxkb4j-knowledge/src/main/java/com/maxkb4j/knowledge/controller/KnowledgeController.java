@@ -31,6 +31,28 @@ import java.io.IOException;
 import java.util.List;
 
 /**
+ * 知识库管理控制器
+ * <p>
+ * 提供知识库的 CRUD、文档上传、向量化、发布、导入导出等全部 REST API。
+ * 所有接口均以 {@code /admin/workspace/api} 为前缀。
+ * </p>
+ *
+ * <h3>核心入库链路</h3>
+ * <p>
+ * 通用知识库上传文档的入口是 {@link #uploadDocument(String, KnowledgeParams)}：
+ * </p>
+ * <pre>
+ *   POST /admin/workspace/api/knowledge/{id}/upload_document
+ *     → KnowledgeService.uploadDocument()
+ *       → 获取工作流配置 → 构建 LogicFlow → CompletableFuture.runAsync 异步执行
+ *         → 工作流节点依次执行（解析→切片→写入→向量化）
+ *           → DocumentParser 解析文件提取文本
+ *           → DocumentSplitService 切片（按标题/句子拆分）
+ *           → DocumentWriteService.batchCreateDocs() 写入数据库
+ *           → 发布 DocumentIndexEvent → DataIndexListener 异步向量化
+ *             → CompositeStoreImpl 双写（PG向量 + MongoDB全文）
+ * </pre>
+ *
  * @author tarzan
  * @date 2024-12-25 16:00:15
  */
@@ -157,9 +179,20 @@ public class KnowledgeController {
       return R.success(knowledgeService.datasourceFormList(nodeType,params));
     }
 
+    /**
+     * 调试模式上传文档
+     * <p>
+     * 与 {@link #uploadDocument(String, KnowledgeParams)} 逻辑相同，但使用知识库草稿状态
+     * 的工作流配置（而非已发布的版本快照），用于工作流调试场景。
+     * </p>
+     *
+     * @param id     知识库ID
+     * @param params 上传参数，包含文件列表、切片配置等
+     * @return 异步操作追踪记录，客户端轮询此记录获取处理进度
+     */
     @PostMapping("/knowledge/{id}/debug")
     public R<KnowledgeActionEntity> debug(@PathVariable("id") String id, @RequestBody KnowledgeParams params) {
-        return R.success(knowledgeService.uploadDocument(id,params, true));
+        return R.success(knowledgeService.uploadDocument(id, params, true));
     }
 
     @PutMapping("/knowledge/{id}/publish")
@@ -181,9 +214,30 @@ public class KnowledgeController {
         return R.success(knowledgeService.actionPage(id,current,size,username,state));
     }
 
+    /**
+     * 【核心入口】通用知识库上传文档
+     * <p>
+     * 这是知识库文档入库的最主要入口，支持上传 PDF/Word/Excel/TXT/PPT/CSV/HTML/MD 等多种文件格式。
+     * 整个处理链路为异步执行，接口立即返回 KnowledgeActionEntity，客户端通过
+     * {@code GET /admin/workspace/api/knowledge/{id}/action/{actionId}} 轮询处理进度。
+     * </p>
+     *
+     * <h3>处理流程</h3>
+     * <ol>
+     *   <li>获取知识库已发布版本的工作流配置</li>
+     *   <li>创建操作追踪记录（state=STARTED）</li>
+     *   <li>构建 LogicFlow 工作流，包含解析节点、切片节点、写入节点等</li>
+     *   <li>通过 CompletableFuture.runAsync 异步执行工作流</li>
+     *   <li>工作流执行过程：文件解析 → 文本切片 → 写入数据库 → 异步向量化 → 双写存储</li>
+     * </ol>
+     *
+     * @param id     知识库ID，路径参数，对应 knowledge 表主键
+     * @param params 上传参数，包含文件信息、切片模式等
+     * @return 操作追踪记录，id 字段为任务追踪ID，state 记录当前状态
+     */
     @PostMapping("/knowledge/{id}/upload_document")
-    public R<KnowledgeActionEntity> uploadDocument(@PathVariable("id") String id,@RequestBody  KnowledgeParams params) {
-        return R.success(knowledgeService.uploadDocument(id,params, false));
+    public R<KnowledgeActionEntity> uploadDocument(@PathVariable("id") String id, @RequestBody KnowledgeParams params) {
+        return R.success(knowledgeService.uploadDocument(id, params, false));
     }
 
     @GetMapping("/knowledge/{id}/action/{actionId}")

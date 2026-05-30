@@ -63,6 +63,12 @@ import static com.maxkb4j.workflow.enums.NodeType.DATA_SOURCE_WEB;
 
 
 /**
+ * 知识库核心服务
+ * <p>
+ * 负责知识库的创建、配置管理、文档上传编排、发布、导入导出等功能。
+ * 是文档入库流程的总调度中心。
+ * </p>
+ *
  * @author tarzan
  * @date 2024-12-25 16:00:15
  */
@@ -280,6 +286,17 @@ public class KnowledgeService extends ServiceImpl<KnowledgeMapper, KnowledgeEnti
     }
 
 
+    /**
+     * 获取知识库工作流配置
+     * <p>
+     * debug 模式使用草稿状态的工作流（knowledge.work_flow），
+     * 正式模式使用最新发布版本的工作流快照（knowledge_workflow_version.work_flow）。
+     * </p>
+     *
+     * @param id    知识库ID
+     * @param debug true=调试模式（读草稿），false=正式模式（读已发布版本）
+     * @return 工作流配置 JSON，包含节点列表和连线关系
+     */
     public JSONObject getKnowledgeWorkFlow(String id, boolean debug) {
         JSONObject workFlow = null;
         if (debug) {
@@ -296,6 +313,35 @@ public class KnowledgeService extends ServiceImpl<KnowledgeMapper, KnowledgeEnti
         return workFlow;
     }
 
+    /**
+     * 【核心方法】上传文档到知识库，异步执行完整处理链路
+     * <p>
+     * 这是文档入库的总调度方法，由 KnowledgeController.uploadDocument() 调用。
+     * 整个流程为异步执行，方法自身不阻塞——它创建追踪记录后立即返回，
+     * 实际处理在工作流线程池中异步完成。
+     * </p>
+     *
+     * <h3>完整处理链路</h3>
+     * <ol>
+     *   <li><b>工作流编排</b>：获取知识库的工作流配置（发布版本或草稿），构建 LogicFlow</li>
+     *   <li><b>创建追踪记录</b>：写入 knowledge_action 表（state=STARTED），返回给客户端轮询</li>
+     *   <li><b>异步执行</b>：通过 CompletableFuture.runAsync 在线程池中执行工作流</li>
+     *   <li><b>工作流节点链</b>：
+     *     <ul>
+     *       <li>数据源节点：接收文件/URL → DocumentParseService 解析 → 提取文本</li>
+     *       <li>切片节点：DocumentSplitService.split() → 按标题/句子拆分为段落</li>
+     *       <li>写入节点：DocumentWriteService.batchCreateDocs() → 写入 document/paragraph/problem 表</li>
+     *     </ul>
+     *   </li>
+     *   <li><b>事件驱动向量化</b>：写入完成后发布 DocumentIndexEvent →
+     *     DataIndexListener（@Async）异步生成向量 → CompositeStoreImpl 双写 PG + MongoDB</li>
+     * </ol>
+     *
+     * @param id     知识库ID
+     * @param params 上传参数（文件信息、切片模式、选择器等）
+     * @param debug  true=调试模式（读取草稿工作流），false=正式模式（读取已发布版本）
+     * @return 操作追踪记录，id 为任务ID，state=STARTED，客户端可轮询获取进度
+     */
     public KnowledgeActionEntity uploadDocument(String id, KnowledgeParams params, boolean debug) {
         JSONObject knowledgeWorkFlow = getKnowledgeWorkFlow(id, debug);
         if (knowledgeWorkFlow == null) {

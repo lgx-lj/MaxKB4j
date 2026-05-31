@@ -36,12 +36,18 @@ public interface DocumentParser {
 
     /**
      * 检查是否支持解析指定文件
+     * <p>
+     * 匹配策略：将文件名转为小写后，检查是否以任一扩展名结尾。
+     * 采用<b>纯粹基于文件扩展名</b>匹配，不检查文件内容魔数。
+     * 例如：{@code "报告.PDF"} → 小写化 → {@code "报告.pdf"} → 匹配 {@code ".pdf"} → 由 PdfParser 处理。
+     * </p>
      *
-     * @param fileName 文件名（大小写不敏感）
-     * @return true=支持解析
+     * @param fileName 文件名（大小写不敏感，支持大写扩展名如 .PDF、.XLSX）
+     * @return true=支持解析，false=不支持的格式
      */
     default boolean support(String fileName) {
         if (fileName == null) return false;
+        // 统一转小写后匹配（".PDF" → ".pdf"）
         String lowerName = fileName.toLowerCase();
         return getExtensions().stream().anyMatch(lowerName::endsWith);
     }

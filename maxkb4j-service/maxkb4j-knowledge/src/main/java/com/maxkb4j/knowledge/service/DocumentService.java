@@ -388,31 +388,40 @@ public class DocumentService extends ServiceImpl<DocumentMapper, DocumentEntity>
      * @return 切片预览列表，每个元素包含文件名、切片段落、存储的 fileId
      */
     public List<TextSegmentVO> split(String knowledgeId, MultipartFile[] files, String[] patterns, Integer limit, Boolean withFilter) throws IOException {
+        // ==================== 第一阶段：文件数量校验 ====================
+        // 检查知识库下文件总数是否超出限制（防止单个知识库文件过多）
         if (checkFileLimit(knowledgeId,files)){
             throw new FileLimitExceededException("文件数量超出限制");
         }
+
         List<TextSegmentVO> result = new ArrayList<>();
         List<DocFileVO> fileStreams = new ArrayList<>();
         if (files == null) return result;
+
+        // ==================== 第二阶段：文件预处理 ====================
+        // 处理两类文件：普通文件直接读取字节；ZIP 压缩包则解压并逐个提取内部文件
         for (MultipartFile file : files) {
             if (file == null || file.isEmpty()) continue;
             String name = file.getOriginalFilename();
             if (name == null) continue;
-            // 验证文件名安全性
+
+            // 安全校验：防止路径穿越攻击（如文件名含 "../" 等）
             if (SecurityUtil.illegalityFileName(name)) {
                 log.warn("非法的文件名: {}", name);
-                continue; // 跳过非法文件
+                continue;
             }
+
+            // --- 处理 ZIP 压缩包：解压后逐一提取内部文件 ---
             if (name.toLowerCase().endsWith(".zip")) {
                 try (ZipArchiveInputStream zis = new ZipArchiveInputStream(file.getInputStream())) {
                     ZipArchiveEntry entry;
                     while ((entry = zis.getNextEntry()) != null) {
                         if (!entry.isDirectory()) {
-                            // 验证压缩包内文件名的安全性
+                            // 压缩包内文件也需做路径安全校验
                             String entryName = SecurityUtil.normalizeFilePath(entry.getName());
                             if (entryName == null) {
                                 log.warn("压缩包中存在非法的文件路径: {}", entry.getName());
-                                continue; // 跳过非法文件
+                                continue;
                             }
                             try {
                                 byte[] bytes = zis.readAllBytes();
@@ -426,22 +435,40 @@ public class DocumentService extends ServiceImpl<DocumentMapper, DocumentEntity>
                     log.warn("ZIP文件 {} 格式异常或已损坏，部分文件可能未读取: {}", name, e.getMessage());
                 }
             } else {
+                // --- 处理普通文件：直接读取字节数组 ---
                 fileStreams.add(new DocFileVO(name, file.getBytes(), file.getContentType()));
             }
         }
+
+        // ==================== 第三阶段：逐文件的三步流水线 ====================
+        //  ① 存储原始文件到 MongoDB OSS → ② 解析提取纯文本 → ③ 切片拆分
         for (DocFileVO fs : fileStreams) {
             TextSegmentVO vo = new TextSegmentVO();
             vo.setName(fs.getName());
             log.info("开始处理文件: {}, 大小: {} bytes", fs.getName(), fs.getBytes().length);
+
+            // 步骤①：将原始文件上传到 MongoDB GridFS，获得文件ID（后续下载/预览使用）
             long t1 = System.currentTimeMillis();
             String fileId = mongoFileService.storeFile(fs.getBytes(), fs.getName(), fs.getContentType());
             log.info("文件存储完成: {} -> {}, 耗时: {}ms", fs.getName(), fileId, System.currentTimeMillis() - t1);
+
+            // 步骤②：根据文件扩展名匹配解析器，提取纯文本
+            //   匹配逻辑在 DocumentParseService 中：遍历所有 DocumentParser 实现类，
+            //   调用 parser.support(fileName) 按扩展名匹配（如 .pdf → PdfParser，.xlsx → ExcelParser）
+            //   PdfParser 内部还会判断是文字型PDF还是扫描件（前3页文字<10字符 → 扫描件 → OCR识别）
             long t2 = System.currentTimeMillis();
             String text = documentParseService.extractText(fs.getName(), new ByteArrayInputStream(fs.getBytes()));
             log.info("文本提取完成: {}, 文本长度: {} 字符, 耗时: {}ms", fs.getName(), text.length(), System.currentTimeMillis() - t2);
+
+            // 步骤③：将纯文本按策略拆分为段落列表
+            //   patterns==null → 智能模式：自动识别Markdown标题层级切分
+            //   patterns!=null → 自定义模式：按用户指定的正则分隔符递归切分
+            //   超过512字符的段落会用 SentenceSplitter（基于BreakIterator，支持中文句子边界）进一步切分
             long t3 = System.currentTimeMillis();
             vo.setContent(documentSpiltService.split(text, patterns, limit, withFilter));
             log.info("切片完成: {}, 段落数: {}, 耗时: {}ms", fs.getName(), vo.getContent().size(), System.currentTimeMillis() - t3);
+
+            // 将原始文件的 MongoDB 存储ID 带回前端（后续确认写入时需要）
             vo.setSourceFileId(fileId);
             result.add(vo);
         }

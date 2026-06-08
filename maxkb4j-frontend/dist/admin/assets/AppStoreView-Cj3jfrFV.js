@@ -1,0 +1,1 @@
+import{P as e}from"../../assets/PlaceholderView-BMACVSyi.js";import{d as o,c as r,o as t}from"../../assets/vue-router-BsjM_9xI.js";import"../../assets/_plugin-vue_export-helper-DlAUqK2U.js";const _=o({__name:"AppStoreView",setup(a){return(p,c)=>(t(),r(e))}});export{_ as default};

@@ -1,0 +1,1 @@
+import{d as o,m as t,p as n,t as r,o as a}from"../../assets/vue-router-BsjM_9xI.js";const _=o({__name:"KnowledgeCreateView",setup(s){const e=r();return t(()=>{e.replace("/knowledge")}),(c,p)=>(a(),n("div"))}});export{_ as default};

@@ -1,0 +1,1 @@
+import{d as t,m as a,p as r,D as s,t as n,o as c}from"../../assets/vue-router-BsjM_9xI.js";const d=t({__name:"ParagraphListView",setup(p){const e=s(),o=n();return a(()=>{o.replace(`/knowledge/${e.params.id}`)}),(u,m)=>(c(),r("div"))}});export{d as default};

@@ -103,7 +103,43 @@ public class KnowledgeController {
     public R<KnowledgeVO> getKnowledgeById(@PathVariable("id") String id) {
         return R.success(knowledgeService.getKnowledgeById(id));
     }
-
+    /**
+     * 知识库命中测试接口
+     * <p>
+     * 用于测试知识库的检索效果，验证文档是否被正确索引和向量化。
+     * 支持多种搜索模式：向量检索、全文检索、混合检索、图检索。
+     * </p>
+     *
+     * <h3>使用场景</h3>
+     * <ul>
+     *   <li>知识库管理员测试文档索引质量</li>
+     *   <li>调整相似度阈值、返回数量等参数优化检索效果</li>
+     *   <li>验证向量化和索引是否正确工作</li>
+     * </ul>
+     *
+     * <h3>搜索模式说明</h3>
+     * <ul>
+     *   <li>{@code embedding} - 向量语义检索，使用 PostgreSQL pgvector 计算余弦相似度</li>
+     *   <li>{@code keywords} - 全文关键词检索，使用 MongoDB 全文索引</li>
+     *   <li>{@code hybrid} - 混合检索，同时使用向量和全文检索，RRF 融合排序</li>
+     *   <li>{@code graph} - 图检索，基于关键词图谱进行关联查询</li>
+     * </ul>
+     *
+     * <h3>请求示例</h3>
+     * <pre>
+     * PUT /admin/workspace/api/knowledge/{id}/hit_test
+     * {
+     *     "queryText": "查询文本",
+     *     "topNumber": 5,
+     *     "similarity": 0.6,
+     *     "searchMode": "embedding"
+     * }
+     * </pre>
+     *
+     * @param id  知识库ID，路径参数
+     * @param dto 搜索请求参数，包含查询文本、搜索模式、相似度阈值等
+     * @return 匹配的段落列表，每个段落包含相似度分数（similarity）和综合分数（comprehensiveScore）
+     */
     @SaCheckPerm(PermissionEnum.KNOWLEDGE_HIT_TEST_READ)
     @PutMapping("/knowledge/{id}/hit_test")
     public R<List<ParagraphVO>> hitTest(@PathVariable("id") String id, @RequestBody DataSearchDTO dto) {

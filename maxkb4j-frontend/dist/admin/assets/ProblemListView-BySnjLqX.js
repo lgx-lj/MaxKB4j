@@ -1,0 +1,1 @@
+import{d as t,m as s,p as r,D as a,t as n,o as c}from"../../assets/vue-router-BsjM_9xI.js";const d=t({__name:"ProblemListView",setup(u){const e=a(),o=n();return s(()=>{o.replace(`/knowledge/${e.params.id}`)}),(p,m)=>(c(),r("div"))}});export{d as default};

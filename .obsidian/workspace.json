@@ -1,0 +1,238 @@
+{
+  "main": {
+    "id": "a45f7c757b86d5cc",
+    "type": "split",
+    "children": [
+      {
+        "id": "3504cde07f6724a9",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "c41b7c55ba22b962",
+            "type": "leaf",
+            "state": {
+              "type": "canvas",
+              "state": {
+                "file": "未命名.canvas",
+                "viewState": {
+                  "x": 0,
+                  "y": 0,
+                  "zoom": 0
+                }
+              },
+              "icon": "lucide-layout-dashboard",
+              "title": "未命名"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "85a60d6ce2a26968",
+    "type": "split",
+    "children": [
+      {
+        "id": "af1279e4bf4e32d0",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "46b43ab5715602b1",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "文件列表"
+            }
+          },
+          {
+            "id": "05073b150ebf4144",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "搜索"
+            }
+          },
+          {
+            "id": "1ffce648240c69e0",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "书签"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "466311f95c908ecb",
+    "type": "split",
+    "children": [
+      {
+        "id": "771ca59b4d5b172a",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "513f8658e49291bb",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "README_CN.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "README_CN 的反向链接列表"
+            }
+          },
+          {
+            "id": "fe0bbf30ea92ece2",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "README_CN.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "README_CN 的出链列表"
+            }
+          },
+          {
+            "id": "309b0b5f84736631",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "标签"
+            }
+          },
+          {
+            "id": "c00496b0c6a75a42",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "添加笔记属性"
+            }
+          },
+          {
+            "id": "db1ea678e70266fd",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "README_CN.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "README_CN 的大纲"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:打开快速切换": false,
+      "graph:查看关系图谱": false,
+      "canvas:新建白板": false,
+      "daily-notes:打开/创建今天的日记": false,
+      "templates:插入模板": false,
+      "command-palette:打开命令面板": false,
+      "bases:新建数据库": false
+    }
+  },
+  "active": "46b43ab5715602b1",
+  "lastOpenFiles": [
+    "未命名.base",
+    "README_CN.md",
+    "docs/ARCHITECTURE.md",
+    "2026-06-08.md",
+    "未命名.canvas",
+    "maxkb4j-frontend/node_modules/node-addon-api/README.md",
+    "ui/src/workflow/nodes/tool-base-node/component/output/OutputTitleDialog.vue",
+    "ui/src/workflow/nodes/tool-base-node/component/output/OutputFieldTable.vue",
+    "ui/src/workflow/nodes/tool-base-node/component/output/OutputFieldFormDialog.vue",
+    "ui/src/workflow/nodes/tool-base-node/component/input/InputFieldTable.vue",
+    "ui/src/workflow/nodes/tool-base-node/component/input/InputTitleDialog.vue",
+    "ui/src/workflow/nodes/tool-base-node/component/input/InputFieldFormDialog.vue",
+    "ui/src/workflow/nodes/variable-splitting/component/VariableFieldTable.vue",
+    "ui/src/workflow/nodes/variable-splitting/component/VariableFieldDialog.vue",
+    "ui/src/workflow/nodes/variable-aggregation-node/component/GroupFieldDialog.vue",
+    "ui/src/assets/workflow/logo_workflow.svg",
+    "ui/src/assets/workflow/icon_video.svg",
+    "ui/src/assets/workflow/icon_variable_splitting.svg",
+    "ui/src/assets/workflow/icon_text_to_video.svg",
+    "ui/src/assets/workflow/icon_text_to_speech.svg",
+    "ui/src/assets/workflow/icon_text-image.svg",
+    "ui/src/assets/workflow/icon_start.svg",
+    "ui/src/assets/workflow/icon_speech_to_text.svg",
+    "ui/src/assets/workflow/icon_setting.svg",
+    "ui/src/assets/workflow/icon_robot.svg",
+    "ui/public/tool/langsearch/detail.md",
+    "ui/public/tool/mysql/detail.md",
+    "ui/public/tool/postgresql/detail.md",
+    "ui/public/tool/google_search/detail.md",
+    "ui/public/tool/bochaai/detail.md",
+    "ui/README.md",
+    "maxkb4j-start/target/classes/static/admin/tool/postgresql/detail.md",
+    "maxkb4j-start/target/classes/static/admin/tool/mysql/detail.md",
+    "maxkb4j-start/target/classes/static/admin/tool/langsearch/detail.md",
+    "maxkb4j-start/target/classes/static/admin/tool/google_search/detail.md",
+    "maxkb4j-start/target/classes/static/admin/tool/bochaai/detail.md",
+    "maxkb4j-start/src/main/resources/static/admin/tool/postgresql/detail.md",
+    "maxkb4j-start/src/main/resources/static/admin/tool/mysql/detail.md",
+    "maxkb4j-start/src/main/resources/static/admin/tool/langsearch/detail.md",
+    "maxkb4j-start/src/main/resources/static/admin/tool/google_search/detail.md",
+    "maxkb4j-start/src/main/resources/static/admin/tool/bochaai/detail.md",
+    "maxkb4j-web/node_modules/linkify-it/README.md",
+    "maxkb4j-web/node_modules/rollup/LICENSE.md",
+    "maxkb4j-web/node_modules/vite/README.md",
+    "maxkb4j-web/node_modules/vite/LICENSE.md",
+    "maxkb4j-web/node_modules/vooks/README.md"
+  ]
+}

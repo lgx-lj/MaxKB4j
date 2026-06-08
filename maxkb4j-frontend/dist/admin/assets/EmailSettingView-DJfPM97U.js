@@ -1,0 +1,1 @@
+import{P as e}from"../../assets/PlaceholderView-BMACVSyi.js";import{d as o,c as t,o as r}from"../../assets/vue-router-BsjM_9xI.js";import"../../assets/_plugin-vue_export-helper-DlAUqK2U.js";const s=o({__name:"EmailSettingView",setup(a){return(c,n)=>(r(),t(e))}});export{s as default};

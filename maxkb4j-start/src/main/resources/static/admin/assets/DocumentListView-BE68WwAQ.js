@@ -1,0 +1,1 @@
+import{d as t,m as s,p as n,D as a,t as r,o as c}from"../../assets/vue-router-BsjM_9xI.js";const d=t({__name:"DocumentListView",setup(u){const e=a(),o=r();return s(()=>{o.replace(`/knowledge/${e.params.id}`)}),(p,m)=>(c(),n("div"))}});export{d as default};

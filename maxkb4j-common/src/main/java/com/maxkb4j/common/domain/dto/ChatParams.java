@@ -42,9 +42,8 @@ public class ChatParams {
     private List<OssFile> imageList;
     @Schema(description = "其他列表")
     private List<OssFile> otherList;
-    @Schema(description = "是否重新回答")
-    @NotNull(message = "是否重新回答")
-    private Boolean reChat;
+    @Schema(description = "是否重新回答，默认false")
+    private Boolean reChat = false;
 
     @JsonIgnore
     private String ipAddress;

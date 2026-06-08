@@ -1,3 +1,64 @@
+/* === KnowFlow 设计系统 === */
+
+:root {
+  /* 主色 */
+  --kf-primary: #2563EB;
+  --kf-primary-hover: #3B82F6;
+  --kf-primary-active: #1D4ED8;
+  --kf-primary-light: #EFF6FF;
+
+  /* 语义色 */
+  --kf-success: #10B981;
+  --kf-warning: #F59E0B;
+  --kf-error: #EF4444;
+  --kf-info: #3B82F6;
+
+  /* 中性色 */
+  --kf-text-primary: #111827;
+  --kf-text-secondary: #6B7280;
+  --kf-text-placeholder: #9CA3AF;
+  --kf-text-disabled: #D1D5DB;
+  --kf-border: #E5E7EB;
+  --kf-border-light: #F3F4F6;
+  --kf-bg-page: #F9FAFB;
+  --kf-bg-card: #FFFFFF;
+  --kf-bg-hover: #F3F4F6;
+  --kf-bg-active: #E5E7EB;
+  --kf-divider: #E5E7EB;
+
+  /* 间距 */
+  --kf-space-xs: 4px;
+  --kf-space-sm: 8px;
+  --kf-space-md: 16px;
+  --kf-space-lg: 24px;
+  --kf-space-xl: 32px;
+  --kf-space-2xl: 48px;
+
+  /* 圆角 */
+  --kf-radius-sm: 6px;
+  --kf-radius-md: 8px;
+  --kf-radius-lg: 12px;
+  --kf-radius-xl: 16px;
+
+  /* 阴影 */
+  --kf-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --kf-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --kf-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+
+  /* 布局 */
+  --kf-sidebar-width: 240px;
+  --kf-sidebar-collapsed: 64px;
+  --kf-topbar-height: 56px;
+
+  /* 过渡 */
+  --kf-transition-fast: 0.15s ease;
+  --kf-transition: 0.2s ease;
+
+  /* 字体 */
+  --kf-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -5,13 +66,13 @@
 }
 
 html, body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
-    'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: var(--kf-font-family);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: 14px;
-  color: #333;
-  background: #f7f8fa;
+  line-height: 1.5;
+  color: var(--kf-text-primary);
+  background: var(--kf-bg-page);
 }
 
 a {
@@ -28,11 +89,11 @@ a {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #d9d9d9;
+  background: #D1D5DB;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #bfbfbf;
+  background: #9CA3AF;
 }
 
 /* 页面过渡 */

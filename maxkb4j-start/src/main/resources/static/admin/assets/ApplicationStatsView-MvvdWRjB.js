@@ -1,0 +1,1 @@
+import{P as e}from"../../assets/PlaceholderView-BMACVSyi.js";import{d as o,c as t,o as a}from"../../assets/vue-router-BsjM_9xI.js";import"../../assets/_plugin-vue_export-helper-DlAUqK2U.js";const m=o({__name:"ApplicationStatsView",setup(r){return(c,p)=>(a(),t(e))}});export{m as default};

@@ -1,0 +1,1 @@
+import{P as e}from"../../assets/PlaceholderView-BMACVSyi.js";import{d as o,c as r,o as a}from"../../assets/vue-router-BsjM_9xI.js";import"../../assets/_plugin-vue_export-helper-DlAUqK2U.js";const _=o({__name:"UserManageView",setup(t){return(c,n)=>(a(),r(e))}});export{_ as default};

@@ -1,0 +1,1 @@
+import{P as e}from"../../assets/PlaceholderView-BMACVSyi.js";import{d as o,c as r,o as t}from"../../assets/vue-router-BsjM_9xI.js";import"../../assets/_plugin-vue_export-helper-DlAUqK2U.js";const m=o({__name:"ToolListView",setup(a){return(c,s)=>(t(),r(e))}});export{m as default};

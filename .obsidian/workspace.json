@@ -186,8 +186,13 @@
       "bases:新建数据库": false
     }
   },
-  "active": "46b43ab5715602b1",
+  "active": "c41b7c55ba22b962",
   "lastOpenFiles": [
+    "maxkb4j-service/maxkb4j-knowledge/target/classes/com/maxkb4j/knowledge/retriever/DataRetriever.class",
+    "maxkb4j-service/maxkb4j-knowledge/target/classes/com/maxkb4j/knowledge/retriever",
+    "maxkb4j-service/maxkb4j-knowledge/target/classes/com/maxkb4j/knowledge/store/FullTextStoreImpl.class",
+    "maxkb4j-service/maxkb4j-knowledge/target/classes/com/maxkb4j/knowledge/service/RetrieveService.class",
+    "maxkb4j-service-api/maxkb4j-knowledge-api/target/classes/com/maxkb4j/knowledge/retrieval/IDataRetriever.class",
     "未命名.base",
     "README_CN.md",
     "docs/ARCHITECTURE.md",
@@ -199,10 +204,6 @@
     "ui/src/workflow/nodes/tool-base-node/component/output/OutputFieldFormDialog.vue",
     "ui/src/workflow/nodes/tool-base-node/component/input/InputFieldTable.vue",
     "ui/src/workflow/nodes/tool-base-node/component/input/InputTitleDialog.vue",
-    "ui/src/workflow/nodes/tool-base-node/component/input/InputFieldFormDialog.vue",
-    "ui/src/workflow/nodes/variable-splitting/component/VariableFieldTable.vue",
-    "ui/src/workflow/nodes/variable-splitting/component/VariableFieldDialog.vue",
-    "ui/src/workflow/nodes/variable-aggregation-node/component/GroupFieldDialog.vue",
     "ui/src/assets/workflow/logo_workflow.svg",
     "ui/src/assets/workflow/icon_video.svg",
     "ui/src/assets/workflow/icon_variable_splitting.svg",

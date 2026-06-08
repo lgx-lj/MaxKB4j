@@ -40,7 +40,7 @@ import java.util.List;
  *   <li>MongoDB 集合必须创建全文索引：{@code db.embedding.createIndex({ content: "text" })}</li>
  * </ul>
  *
- * @author MaxKB
+ * @author liguoxian
  */
 @Slf4j
 @Component("fullTextStore")

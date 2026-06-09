@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/MaxKB4J_v2
-    username: username
-    password: password
+    url: jdbc:postgresql://118.24.172.20:5432/MaxKB4J
+    username: postgres
+    password: changeme
     driver-class-name: org.postgresql.Driver
   data:
     mongodb:
